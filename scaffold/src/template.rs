@@ -1,3 +1,34 @@
+use crate::{name::validate_name, render::render};
+use std::collections::BTreeMap;
+use std::path::PathBuf;
+
+/// Render files in memory; paths are relative to the requested destination.
+pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>, String> {
+    validate_name(name)?;
+    lookup(kind)?;
+    let variables = BTreeMap::from([
+        ("name".into(), name.into()),
+        ("crate_name".into(), name.replace('-', "_")),
+        ("edition".into(), "2021".into()),
+    ]);
+    let mut files = BTreeMap::new();
+    files.insert(
+        PathBuf::from("Cargo.toml"),
+        render(include_str!("../templates/Cargo.toml.tpl"), &variables)?,
+    );
+    files.insert(PathBuf::from(".gitignore"), "/target/\n".into());
+    match kind {
+        "bin" => {
+            files.insert(
+                PathBuf::from("src/main.rs"),
+                render(include_str!("../templates/bin/main.rs.tpl"), &variables)?,
+            );
+        }
+        _ => return Err(format!("template {kind:?} has no renderer yet")),
+    }
+    Ok(files)
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Template {
     pub name: &'static str,
