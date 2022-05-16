@@ -24,6 +24,12 @@ pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>
                 render(include_str!("../templates/bin/main.rs.tpl"), &variables)?,
             );
         }
+        "lib" => {
+            files.insert(
+                PathBuf::from("src/lib.rs"),
+                render(include_str!("../templates/lib/lib.rs.tpl"), &variables)?,
+            );
+        }
         _ => return Err(format!("template {kind:?} has no renderer yet")),
     }
     Ok(files)
