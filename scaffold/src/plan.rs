@@ -11,6 +11,7 @@ impl Plan {
     /// Create files using exclusive opens: existing files are never truncated.
     pub fn write(&self, root: &std::path::Path) -> std::io::Result<Vec<PathBuf>> {
         use std::io::Write;
+        self.preflight(root)?;
         let mut written = Vec::new();
         for (path, contents) in &self.files {
             let target = root.join(path);
@@ -23,6 +24,34 @@ impl Plan {
             written.push(target);
         }
         Ok(written)
+    }
+
+    pub fn preflight(&self, root: &std::path::Path) -> std::io::Result<()> {
+        for path in self.files.keys() {
+            let target = root.join(path);
+            if target.symlink_metadata().is_ok() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::AlreadyExists,
+                    format!("refusing to overwrite {}", target.display()),
+                ));
+            }
+            for ancestor in target
+                .parent()
+                .into_iter()
+                .flat_map(|p| p.ancestors())
+                .take_while(|p| p.starts_with(root))
+            {
+                if let Ok(metadata) = ancestor.symlink_metadata() {
+                    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                        return Err(std::io::Error::other(format!(
+                            "unsafe output ancestor {}",
+                            ancestor.display()
+                        )));
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn project(name: &str, kind: &str) -> Result<Self, String> {
