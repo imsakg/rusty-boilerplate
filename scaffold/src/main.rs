@@ -1,7 +1,12 @@
 use clap::Parser;
-use rusty_boilerplate::cli::Cli;
+use rusty_boilerplate::{app, cli::Cli};
 
 fn main() {
-    let _cli = Cli::parse();
-    println!("Rust project scaffolding; use --help for available commands.");
+    match app::run(Cli::parse()) {
+        Ok(message) => print!("{message}"),
+        Err(error) => {
+            eprintln!("error: {error}");
+            std::process::exit(1);
+        }
+    }
 }
