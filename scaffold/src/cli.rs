@@ -21,6 +21,8 @@ pub struct ProjectArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// List templates, or describe one by name
+    Templates { name: Option<String> },
     /// Create a new project in a new directory
     New {
         name: String,

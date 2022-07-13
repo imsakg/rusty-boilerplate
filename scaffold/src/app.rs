@@ -7,6 +7,17 @@ use std::path::Path;
 pub fn run(cli: Cli) -> Result<String, String> {
     match cli.command {
         None => Ok("Rust project scaffolding; use --help for available commands.\n".into()),
+        Some(Command::Templates { name }) => {
+            let templates = if let Some(name) = name {
+                vec![crate::template::lookup(&name)?]
+            } else {
+                crate::template::catalog().iter().collect()
+            };
+            Ok(templates
+                .iter()
+                .map(|t| format!("{}: {}\n", t.name, t.description))
+                .collect())
+        }
         Some(Command::New {
             name,
             path,
