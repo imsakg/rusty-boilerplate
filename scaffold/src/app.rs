@@ -28,6 +28,14 @@ pub fn run(cli: Cli) -> Result<String, String> {
                 return Err(format!("destination already exists: {}", root.display()));
             }
             let plan = Plan::project(&name, options.template.as_deref().unwrap_or("bin"))?;
+            if options.dry_run {
+                plan.preflight(&root).map_err(|e| e.to_string())?;
+                return Ok(plan
+                    .files
+                    .keys()
+                    .map(|p| format!("Would create {}\n", root.join(p).display()))
+                    .collect());
+            }
             let written = plan
                 .write(&root)
                 .map_err(|e| format!("creating {}: {e}", root.display()))?;

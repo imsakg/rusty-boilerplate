@@ -17,6 +17,9 @@ pub struct ProjectArgs {
     /// Built-in project template
     #[arg(short, long)]
     pub template: Option<String>,
+    /// Print planned files without writing anything
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Subcommand)]
