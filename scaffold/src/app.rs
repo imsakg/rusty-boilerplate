@@ -7,6 +7,33 @@ use std::path::Path;
 pub fn run(cli: Cli) -> Result<String, String> {
     match cli.command {
         None => Ok("Rust project scaffolding; use --help for available commands.\n".into()),
+        Some(Command::Init {
+            path,
+            name,
+            options,
+        }) => {
+            let root = path
+                .canonicalize()
+                .map_err(|e| format!("opening {}: {e}", path.display()))?;
+            let name = name
+                .or_else(|| root.file_name().and_then(|n| n.to_str()).map(str::to_owned))
+                .ok_or("cannot infer a project name; use --name")?;
+            let plan = Plan::project(&name, options.template.as_deref().unwrap_or("bin"))?;
+            if options.dry_run {
+                plan.preflight(&root).map_err(|e| e.to_string())?;
+                return Ok(plan
+                    .files
+                    .keys()
+                    .map(|p| format!("Would create {}\n", root.join(p).display()))
+                    .collect());
+            }
+            let files = plan.write(&root).map_err(|e| e.to_string())?;
+            Ok(format!(
+                "Initialized {} ({} files)\n",
+                root.display(),
+                files.len()
+            ))
+        }
         Some(Command::Templates { name }) => {
             let templates = if let Some(name) = name {
                 vec![crate::template::lookup(&name)?]

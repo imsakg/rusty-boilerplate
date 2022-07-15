@@ -24,6 +24,15 @@ pub struct ProjectArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Add a project to an existing directory without overwriting files
+    Init {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        #[arg(long)]
+        name: Option<String>,
+        #[command(flatten)]
+        options: ProjectArgs,
+    },
     /// List templates, or describe one by name
     Templates { name: Option<String> },
     /// Create a new project in a new directory
