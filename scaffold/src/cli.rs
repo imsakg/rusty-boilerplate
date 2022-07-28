@@ -8,6 +8,9 @@ pub struct Cli {
     /// Increase diagnostic detail
     #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     pub verbose: u8,
+    /// Read defaults from this TOML file
+    #[arg(long, global = true)]
+    pub config: Option<PathBuf>,
     #[command(subcommand)]
     pub command: Option<Command>,
 }

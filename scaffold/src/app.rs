@@ -5,6 +5,7 @@ use crate::{
 use std::path::Path;
 
 pub fn run(cli: Cli) -> Result<String, String> {
+    let config = cli.config;
     match cli.command {
         None => Ok("Rust project scaffolding; use --help for available commands.\n".into()),
         Some(Command::Init {
@@ -18,7 +19,9 @@ pub fn run(cli: Cli) -> Result<String, String> {
             let name = name
                 .or_else(|| root.file_name().and_then(|n| n.to_str()).map(str::to_owned))
                 .ok_or("cannot infer a project name; use --name")?;
-            let plan = Plan::project(&name, options.template.as_deref().unwrap_or("bin"))?;
+            let settings = load_settings(config.as_deref(), &options)?;
+            let mut plan = Plan::project(&name, &settings.template)?;
+            settings.apply(&mut plan)?;
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
                 return Ok(plan
@@ -54,7 +57,9 @@ pub fn run(cli: Cli) -> Result<String, String> {
             if root.symlink_metadata().is_ok() {
                 return Err(format!("destination already exists: {}", root.display()));
             }
-            let plan = Plan::project(&name, options.template.as_deref().unwrap_or("bin"))?;
+            let settings = load_settings(config.as_deref(), &options)?;
+            let mut plan = Plan::project(&name, &settings.template)?;
+            settings.apply(&mut plan)?;
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
                 return Ok(plan
@@ -73,4 +78,23 @@ pub fn run(cli: Cli) -> Result<String, String> {
             ))
         }
     }
+}
+
+fn load_settings(
+    path: Option<&Path>,
+    options: &crate::cli::ProjectArgs,
+) -> Result<crate::config::Settings, String> {
+    let mut settings = if let Some(path) = path {
+        crate::config::Settings::parse(
+            &std::fs::read_to_string(path)
+                .map_err(|e| format!("reading config {}: {e}", path.display()))?,
+        )?
+    } else {
+        crate::config::Settings::default()
+    };
+    if let Some(template) = &options.template {
+        settings.template = template.clone();
+    }
+    settings.validate()?;
+    Ok(settings)
 }
