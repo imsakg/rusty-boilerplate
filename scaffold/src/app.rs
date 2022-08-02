@@ -84,14 +84,27 @@ fn load_settings(
     path: Option<&Path>,
     options: &crate::cli::ProjectArgs,
 ) -> Result<crate::config::Settings, String> {
-    let mut settings = if let Some(path) = path {
-        crate::config::Settings::parse(
-            &std::fs::read_to_string(path)
-                .map_err(|e| format!("reading config {}: {e}", path.display()))?,
-        )?
+    let paths = if let Some(path) = path {
+        vec![path.to_path_buf()]
     } else {
-        crate::config::Settings::default()
+        let user = std::env::var_os("XDG_CONFIG_HOME")
+            .map(std::path::PathBuf::from)
+            .or_else(|| {
+                std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".config"))
+            })
+            .map(|p| p.join("rusty/config.toml"));
+        crate::config::discover(
+            &std::env::current_dir().map_err(|e| e.to_string())?,
+            user.as_deref(),
+        )
     };
+    let mut settings = crate::config::Settings::default();
+    for path in paths {
+        settings = settings.merge_toml(
+            &std::fs::read_to_string(&path)
+                .map_err(|e| format!("reading config {}: {e}", path.display()))?,
+        )?;
+    }
     if let Some(template) = &options.template {
         settings.template = template.clone();
     }

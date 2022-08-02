@@ -91,3 +91,24 @@ impl Settings {
         Ok(())
     }
 }
+
+/// User defaults followed by the nearest ancestor `.rusty.toml`.
+pub fn discover(
+    start: &std::path::Path,
+    user_config: Option<&std::path::Path>,
+) -> Vec<std::path::PathBuf> {
+    let mut paths = Vec::new();
+    if let Some(path) = user_config.filter(|p| p.exists()) {
+        paths.push(path.to_path_buf());
+    }
+    if let Some(path) = start
+        .ancestors()
+        .map(|p| p.join(".rusty.toml"))
+        .find(|p| p.exists())
+    {
+        if !paths.contains(&path) {
+            paths.push(path);
+        }
+    }
+    paths
+}
