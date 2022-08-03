@@ -26,6 +26,28 @@ impl Default for Settings {
 }
 
 impl Settings {
+    pub fn merge_env(
+        mut self,
+        values: impl IntoIterator<Item = (impl AsRef<str>, impl AsRef<str>)>,
+    ) -> Result<Self, String> {
+        for (key, value) in values {
+            match key.as_ref() {
+                "RUSTY_TEMPLATE" => self.template = value.as_ref().into(),
+                "RUSTY_EDITION" => self.edition = value.as_ref().into(),
+                "RUSTY_AUTHORS" => {
+                    self.authors = value
+                        .as_ref()
+                        .split(';')
+                        .map(|v| v.trim().to_owned())
+                        .collect()
+                }
+                _ => {}
+            }
+        }
+        self.validate()?;
+        Ok(self)
+    }
+
     pub fn parse(source: &str) -> Result<Self, String> {
         Self::default().merge_toml(source)
     }

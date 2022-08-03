@@ -1,5 +1,21 @@
 use rusty_boilerplate::config::Settings;
 #[test]
+fn environment_overrides_are_explicit_and_validated() {
+    let settings = Settings::default()
+        .merge_env([
+            ("RUSTY_TEMPLATE", "lib"),
+            ("RUSTY_EDITION", "2018"),
+            ("RUSTY_AUTHORS", "Ada;Grace"),
+        ])
+        .unwrap();
+    assert_eq!(settings.template, "lib");
+    assert_eq!(settings.authors, ["Ada", "Grace"]);
+    assert!(Settings::default()
+        .merge_env([("RUSTY_EDITION", "invalid")])
+        .is_err());
+}
+
+#[test]
 fn defaults_and_toml_overrides_are_typed() {
     let config = Settings::parse(
         "edition = '2018'\ntemplate = 'lib'\nauthors = ['Ada <ada@example.test>']\n",
