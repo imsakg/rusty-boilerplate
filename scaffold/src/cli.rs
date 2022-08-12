@@ -23,6 +23,12 @@ pub struct ProjectArgs {
     /// Print planned files without writing anything
     #[arg(long)]
     pub dry_run: bool,
+    /// Override the Rust edition
+    #[arg(long, value_parser = ["2018", "2021"])]
+    pub edition: Option<String>,
+    /// Set an author (repeat for multiple authors)
+    #[arg(long = "author")]
+    pub authors: Vec<String>,
 }
 
 #[derive(Debug, Subcommand)]

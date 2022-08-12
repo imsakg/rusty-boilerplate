@@ -109,6 +109,12 @@ fn load_settings(
     if let Some(template) = &options.template {
         settings.template = template.clone();
     }
+    if let Some(edition) = &options.edition {
+        settings.edition = edition.clone();
+    }
+    if !options.authors.is_empty() {
+        settings.authors = options.authors.clone();
+    }
     settings.validate()?;
     Ok(settings)
 }
