@@ -15,7 +15,7 @@ pub struct Cli {
     pub command: Option<Command>,
 }
 
-#[derive(Debug, Args)]
+#[derive(Debug, Default, Args)]
 pub struct ProjectArgs {
     /// Built-in project template
     #[arg(short, long)]
@@ -33,6 +33,11 @@ pub struct ProjectArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Inspect or initialize configuration
+    Config {
+        #[command(subcommand)]
+        action: ConfigCommand,
+    },
     /// Add a project to an existing directory without overwriting files
     Init {
         #[arg(default_value = ".")]
@@ -52,4 +57,10 @@ pub enum Command {
         #[command(flatten)]
         options: ProjectArgs,
     },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ConfigCommand {
+    /// Print effective settings after configuration and environment layering
+    Show,
 }

@@ -7,6 +7,12 @@ use std::path::Path;
 pub fn run(cli: Cli) -> Result<String, String> {
     let config = cli.config;
     match cli.command {
+        Some(Command::Config {
+            action: crate::cli::ConfigCommand::Show,
+        }) => {
+            let settings = load_settings(config.as_deref(), &crate::cli::ProjectArgs::default())?;
+            toml::to_string_pretty(&settings).map_err(|e| e.to_string())
+        }
         None => Ok("Rust project scaffolding; use --help for available commands.\n".into()),
         Some(Command::Init {
             path,
