@@ -8,6 +8,21 @@ pub fn run(cli: Cli) -> Result<String, String> {
     let config = cli.config;
     match cli.command {
         Some(Command::Config {
+            action: crate::cli::ConfigCommand::Init { path },
+        }) => {
+            use std::io::Write;
+            let source = toml::to_string_pretty(&crate::config::Settings::default())
+                .map_err(|e| e.to_string())?;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+                .map_err(|e| format!("creating config {}: {e}", path.display()))?;
+            file.write_all(source.as_bytes())
+                .map_err(|e| e.to_string())?;
+            Ok(format!("Created config {}\n", path.display()))
+        }
+        Some(Command::Config {
             action: crate::cli::ConfigCommand::Show,
         }) => {
             let settings = load_settings(config.as_deref(), &crate::cli::ProjectArgs::default())?;

@@ -61,6 +61,11 @@ pub enum Command {
 
 #[derive(Debug, Subcommand)]
 pub enum ConfigCommand {
+    /// Write default settings to a new file
+    Init {
+        #[arg(default_value = ".rusty.toml")]
+        path: PathBuf,
+    },
     /// Print effective settings after configuration and environment layering
     Show,
 }
