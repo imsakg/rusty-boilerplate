@@ -33,6 +33,16 @@ pub struct ProjectArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Generate a source file inside a Cargo project
+    Generate {
+        #[arg(value_enum)]
+        kind: crate::generate::Kind,
+        name: String,
+        #[arg(long, default_value = ".")]
+        path: PathBuf,
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// Inspect or initialize configuration
     Config {
         #[command(subcommand)]

@@ -7,6 +7,30 @@ use std::path::Path;
 pub fn run(cli: Cli) -> Result<String, String> {
     let config = cli.config;
     match cli.command {
+        Some(Command::Generate {
+            kind,
+            name,
+            path,
+            dry_run,
+        }) => {
+            if !path.join("Cargo.toml").is_file() {
+                return Err(format!("{} is not a Cargo project", path.display()));
+            }
+            let plan = crate::generate::file_plan(kind, &name)?;
+            plan.preflight(&path).map_err(|e| e.to_string())?;
+            if dry_run {
+                return Ok(plan
+                    .files
+                    .keys()
+                    .map(|p| format!("Would create {}\n", path.join(p).display()))
+                    .collect());
+            }
+            let written = plan.write(&path).map_err(|e| e.to_string())?;
+            Ok(written
+                .iter()
+                .map(|p| format!("Created {}\n", p.display()))
+                .collect())
+        }
         Some(Command::Config {
             action: crate::cli::ConfigCommand::Init { path },
         }) => {
