@@ -5,6 +5,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Kind {
     Module,
+    Example,
     Test,
 }
 
@@ -16,6 +17,7 @@ pub fn file_plan(kind: Kind, name: &str) -> Result<Plan, String> {
         );
     }
     let (path, source) = match kind {
+        Kind::Example => (format!("examples/{name}.rs"), format!("fn main() {{\n    println!(\"Example: {name}\");\n}}\n")),
         Kind::Test => (format!("tests/{name}.rs"), "#[test]\nfn manifest_exists() {\n    assert!(std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"Cargo.toml\").is_file());\n}\n".into()),
         Kind::Module => (
             format!("src/{name}.rs"),
