@@ -26,3 +26,23 @@ pub fn file_plan(kind: Kind, name: &str) -> Result<Plan, String> {
     };
     Plan::from_files([(PathBuf::from(path), source)])
 }
+
+/// Find the nearest Cargo package; virtual workspace roots are not packages.
+pub fn find_project(start: &std::path::Path) -> Result<PathBuf, String> {
+    let start = start
+        .canonicalize()
+        .map_err(|e| format!("opening {}: {e}", start.display()))?;
+    for path in start.ancestors() {
+        let manifest = path.join("Cargo.toml");
+        if manifest.is_file() {
+            let source = std::fs::read_to_string(&manifest).map_err(|e| e.to_string())?;
+            let value: toml::Value = source
+                .parse()
+                .map_err(|e| format!("invalid {}: {e}", manifest.display()))?;
+            if value.get("package").is_some() {
+                return Ok(path.to_path_buf());
+            }
+        }
+    }
+    Err(format!("no Cargo package found from {}", start.display()))
+}

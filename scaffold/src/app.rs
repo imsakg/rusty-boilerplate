@@ -13,9 +13,7 @@ pub fn run(cli: Cli) -> Result<String, String> {
             path,
             dry_run,
         }) => {
-            if !path.join("Cargo.toml").is_file() {
-                return Err(format!("{} is not a Cargo project", path.display()));
-            }
+            let path = crate::generate::find_project(&path)?;
             let plan = crate::generate::file_plan(kind, &name)?;
             plan.preflight(&path).map_err(|e| e.to_string())?;
             if dry_run {
