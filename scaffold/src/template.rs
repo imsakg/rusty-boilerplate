@@ -24,6 +24,16 @@ pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>
                 render(include_str!("../templates/bin/main.rs.tpl"), &variables)?,
             );
         }
+        "cli" => {
+            files.insert(
+                PathBuf::from("src/main.rs"),
+                render(include_str!("../templates/cli/main.rs.tpl"), &variables)?,
+            );
+            files
+                .get_mut(std::path::Path::new("Cargo.toml"))
+                .expect("manifest inserted")
+                .push_str("clap = { version = \"4\", features = [\"derive\"] }\n");
+        }
         "lib" => {
             files.insert(
                 PathBuf::from("src/lib.rs"),
@@ -46,6 +56,10 @@ pub fn catalog() -> &'static [Template] {
         Template {
             name: "bin",
             description: "Dependency-free binary application",
+        },
+        Template {
+            name: "cli",
+            description: "Clap-based command-line application",
         },
         Template {
             name: "lib",
