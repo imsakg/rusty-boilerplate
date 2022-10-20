@@ -88,28 +88,41 @@ impl Settings {
 
     pub fn apply(&self, plan: &mut crate::plan::Plan) -> Result<(), String> {
         self.validate()?;
-        let source = plan
-            .files
-            .get_mut(std::path::Path::new("Cargo.toml"))
-            .ok_or("plan has no Cargo.toml")?;
-        let mut manifest: toml::Value = source
-            .parse()
-            .map_err(|e| format!("invalid manifest: {e}"))?;
-        manifest["package"]["edition"] = toml::Value::String(self.edition.clone());
-        manifest["package"]
-            .as_table_mut()
-            .ok_or("manifest has no package table")?
-            .insert(
-                "authors".into(),
-                toml::Value::Array(
-                    self.authors
-                        .iter()
-                        .cloned()
-                        .map(toml::Value::String)
-                        .collect(),
-                ),
-            );
-        *source = toml::to_string_pretty(&manifest).map_err(|e| e.to_string())?;
+        let mut manifests = 0;
+        for (path, source) in &mut plan.files {
+            if path.file_name() != Some(std::ffi::OsStr::new("Cargo.toml")) {
+                continue;
+            }
+            let mut manifest: toml::Value = source
+                .parse()
+                .map_err(|e| format!("invalid manifest {}: {e}", path.display()))?;
+            if let Some(package) = manifest
+                .get_mut("package")
+                .and_then(toml::Value::as_table_mut)
+            {
+                package.insert("edition".into(), toml::Value::String(self.edition.clone()));
+                package.insert(
+                    "authors".into(),
+                    toml::Value::Array(
+                        self.authors
+                            .iter()
+                            .cloned()
+                            .map(toml::Value::String)
+                            .collect(),
+                    ),
+                );
+                *source = toml::to_string_pretty(&manifest).map_err(|e| e.to_string())?;
+                manifests += 1;
+            } else if !manifest.get("workspace").is_some_and(toml::Value::is_table) {
+                return Err(format!(
+                    "{} has no package or workspace table",
+                    path.display()
+                ));
+            }
+        }
+        if manifests == 0 {
+            return Err("plan has no Cargo package manifest".into());
+        }
         Ok(())
     }
 }

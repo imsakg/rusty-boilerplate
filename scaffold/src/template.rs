@@ -34,6 +34,30 @@ pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>
                 .expect("manifest inserted")
                 .push_str("clap = { version = \"4\", features = [\"derive\"] }\n");
         }
+        "workspace" => {
+            files.insert(
+                PathBuf::from("Cargo.toml"),
+                "[workspace]\nmembers = [\"app\", \"core\"]\nresolver = \"2\"\n".into(),
+            );
+            files.insert(
+                PathBuf::from("core/Cargo.toml"),
+                format!(
+                    "[package]\nname = \"{name}-core\"\nversion = \"0.1.0\"\nedition = \"2021\"\n"
+                ),
+            );
+            files.insert(
+                PathBuf::from("core/src/lib.rs"),
+                render(include_str!("../templates/lib/lib.rs.tpl"), &variables)?,
+            );
+            files.insert(PathBuf::from("app/Cargo.toml"), format!("[package]\nname = \"{name}-app\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[dependencies]\n{name}-core = {{ path = \"../core\" }}\n"));
+            files.insert(
+                PathBuf::from("app/src/main.rs"),
+                format!(
+                    "fn main() {{\n    println!(\"{{}}\", {}_core::add(2, 2));\n}}\n",
+                    name.replace('-', "_")
+                ),
+            );
+        }
         "lib" => {
             files.insert(
                 PathBuf::from("src/lib.rs"),
@@ -64,6 +88,10 @@ pub fn catalog() -> &'static [Template] {
         Template {
             name: "lib",
             description: "Library with a unit test",
+        },
+        Template {
+            name: "workspace",
+            description: "Application plus shared library workspace",
         },
     ]
 }
