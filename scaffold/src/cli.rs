@@ -29,6 +29,9 @@ pub struct ProjectArgs {
     /// Set an author (repeat for multiple authors)
     #[arg(long = "author")]
     pub authors: Vec<String>,
+    /// SPDX license choice for generated projects
+    #[arg(long, value_parser = ["MIT", "Apache-2.0", "MIT OR Apache-2.0"])]
+    pub license: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

@@ -158,6 +158,9 @@ fn load_settings(
     if !options.authors.is_empty() {
         settings.authors = options.authors.clone();
     }
+    if let Some(license) = &options.license {
+        settings.license = Some(license.clone());
+    }
     settings.validate()?;
     Ok(settings)
 }

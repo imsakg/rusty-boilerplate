@@ -5,6 +5,8 @@ pub struct Settings {
     pub template: String,
     pub edition: String,
     pub authors: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -13,6 +15,7 @@ struct Overlay {
     template: Option<String>,
     edition: Option<String>,
     authors: Option<Vec<String>>,
+    license: Option<String>,
 }
 
 impl Default for Settings {
@@ -21,6 +24,7 @@ impl Default for Settings {
             template: "bin".into(),
             edition: "2021".into(),
             authors: Vec::new(),
+            license: None,
         }
     }
 }
@@ -33,6 +37,7 @@ impl Settings {
         for (key, value) in values {
             match key.as_ref() {
                 "RUSTY_TEMPLATE" => self.template = value.as_ref().into(),
+                "RUSTY_LICENSE" => self.license = Some(value.as_ref().into()),
                 "RUSTY_EDITION" => self.edition = value.as_ref().into(),
                 "RUSTY_AUTHORS" => {
                     self.authors = value
@@ -64,12 +69,22 @@ impl Settings {
         if let Some(value) = overlay.authors {
             self.authors = value;
         }
+        if let Some(value) = overlay.license {
+            self.license = Some(value);
+        }
         self.validate()?;
         Ok(self)
     }
 
     pub fn validate(&self) -> Result<(), String> {
         crate::template::lookup(&self.template)?;
+        if self
+            .license
+            .as_deref()
+            .is_some_and(|value| !["MIT", "Apache-2.0", "MIT OR Apache-2.0"].contains(&value))
+        {
+            return Err("unsupported license; choose MIT, Apache-2.0 or MIT OR Apache-2.0".into());
+        }
         if !["2018", "2021"].contains(&self.edition.as_str()) {
             return Err(format!(
                 "unsupported edition {:?}; choose 2018 or 2021",
@@ -112,12 +127,42 @@ impl Settings {
                     ),
                 );
                 *source = toml::to_string_pretty(&manifest).map_err(|e| e.to_string())?;
+                if let Some(license) = &self.license {
+                    manifest["package"]
+                        .as_table_mut()
+                        .expect("validated package")
+                        .insert("license".into(), toml::Value::String(license.clone()));
+                    *source = toml::to_string_pretty(&manifest).map_err(|e| e.to_string())?;
+                }
                 manifests += 1;
             } else if !manifest.get("workspace").is_some_and(toml::Value::is_table) {
                 return Err(format!(
                     "{} has no package or workspace table",
                     path.display()
                 ));
+            }
+        }
+        if let Some(license) = &self.license {
+            if license.contains("MIT") {
+                plan.files.insert(
+                    "LICENSE-MIT".into(),
+                    include_str!("../templates/licenses/MIT.txt").replace(
+                        "Copyright (c) ",
+                        &format!(
+                            "Copyright (c) [year] {}",
+                            self.authors
+                                .first()
+                                .map(String::as_str)
+                                .unwrap_or("[copyright holder]")
+                        ),
+                    ),
+                );
+            }
+            if license.contains("Apache-2.0") {
+                plan.files.insert(
+                    "LICENSE-APACHE".into(),
+                    include_str!("../templates/licenses/Apache-2.0.txt").into(),
+                );
             }
         }
         if manifests == 0 {
