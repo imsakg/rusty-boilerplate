@@ -74,6 +74,9 @@ pub fn run(cli: Cli) -> Result<String, String> {
                     .collect());
             }
             let files = plan.write(&root).map_err(|e| e.to_string())?;
+            if options.git {
+                initialize_git(&root)?;
+            }
             Ok(format!(
                 "Initialized {} ({} files)\n",
                 root.display(),
@@ -114,6 +117,9 @@ pub fn run(cli: Cli) -> Result<String, String> {
             let written = plan
                 .write(&root)
                 .map_err(|e| format!("creating {}: {e}", root.display()))?;
+            if options.git {
+                initialize_git(&root)?;
+            }
             Ok(format!(
                 "Created {} ({} files)\n",
                 root.display(),
@@ -163,4 +169,26 @@ fn load_settings(
     }
     settings.validate()?;
     Ok(settings)
+}
+
+fn initialize_git(root: &Path) -> Result<(), String> {
+    let output = std::process::Command::new("git")
+        .args([
+            "-c",
+            "init.templateDir=",
+            "init",
+            "--quiet",
+            "--initial-branch=main",
+            "--",
+        ])
+        .arg(root)
+        .output()
+        .map_err(|e| format!("project files created, but git init failed: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "project files created, but git init failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    Ok(())
 }

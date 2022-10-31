@@ -23,6 +23,9 @@ pub struct ProjectArgs {
     /// Print planned files without writing anything
     #[arg(long)]
     pub dry_run: bool,
+    /// Initialize a local Git repository after creating files (never commits or pushes)
+    #[arg(long)]
+    pub git: bool,
     /// Override the Rust edition
     #[arg(long, value_parser = ["2018", "2021"])]
     pub edition: Option<String>,
