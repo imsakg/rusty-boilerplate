@@ -20,6 +20,9 @@ pub struct ProjectArgs {
     /// Built-in project template
     #[arg(short, long)]
     pub template: Option<String>,
+    /// Render a trusted local template directory instead of a built-in starter
+    #[arg(long, conflicts_with = "template")]
+    pub template_dir: Option<PathBuf>,
     /// Print planned files without writing anything
     #[arg(long)]
     pub dry_run: bool,

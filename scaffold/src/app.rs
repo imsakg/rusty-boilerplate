@@ -63,7 +63,11 @@ pub fn run(cli: Cli) -> Result<String, String> {
                 .or_else(|| root.file_name().and_then(|n| n.to_str()).map(str::to_owned))
                 .ok_or("cannot infer a project name; use --name")?;
             let settings = load_settings(config.as_deref(), &options)?;
-            let mut plan = Plan::project(&name, &settings.template)?;
+            let mut plan = if let Some(directory) = &options.template_dir {
+                crate::local::load(directory, &name, &settings.edition)?
+            } else {
+                Plan::project(&name, &settings.template)?
+            };
             settings.apply(&mut plan)?;
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
@@ -104,7 +108,11 @@ pub fn run(cli: Cli) -> Result<String, String> {
                 return Err(format!("destination already exists: {}", root.display()));
             }
             let settings = load_settings(config.as_deref(), &options)?;
-            let mut plan = Plan::project(&name, &settings.template)?;
+            let mut plan = if let Some(directory) = &options.template_dir {
+                crate::local::load(directory, &name, &settings.edition)?
+            } else {
+                Plan::project(&name, &settings.template)?
+            };
             settings.apply(&mut plan)?;
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
