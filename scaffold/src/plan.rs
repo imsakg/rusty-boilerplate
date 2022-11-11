@@ -62,6 +62,15 @@ impl Plan {
         let mut result = BTreeMap::new();
         let mut seen = BTreeSet::new();
         for (path, content) in files {
+            if path.components().any(|part| {
+                let part = part.as_os_str().to_string_lossy();
+                part.eq_ignore_ascii_case(".git") || part.contains([':', '<', '>', '|', '?', '*'])
+            }) {
+                return Err(format!(
+                    "nonportable or repository-control path {}",
+                    path.display()
+                ));
+            }
             if path.as_os_str().is_empty()
                 || path
                     .components()

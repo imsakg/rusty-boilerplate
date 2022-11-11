@@ -55,6 +55,11 @@ fn visit(
                 .ok_or("template paths must be UTF-8")?;
             let relative = relative.strip_suffix(".tpl").unwrap_or(relative);
             let target = PathBuf::from(render(relative, variables)?);
+            if files.len() >= 1024
+                || entry.metadata().map_err(|e| e.to_string())?.len() > 1024 * 1024
+            {
+                return Err("local templates are limited to 1024 files and 1 MiB per file".into());
+            }
             let source = std::fs::read_to_string(&path)
                 .map_err(|e| format!("reading template {}: {e}", path.display()))?;
             files.push((target, render(&source, variables)?));
