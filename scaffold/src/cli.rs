@@ -8,6 +8,9 @@ pub struct Cli {
     /// Increase diagnostic detail
     #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     pub verbose: u8,
+    /// Emit a JSON success/error envelope on stdout
+    #[arg(long, global = true)]
+    pub json: bool,
     /// Read defaults from this TOML file
     #[arg(long, global = true)]
     pub config: Option<PathBuf>,

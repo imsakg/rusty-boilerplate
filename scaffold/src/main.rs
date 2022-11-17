@@ -2,10 +2,22 @@ use clap::Parser;
 use rusty_boilerplate::{app, cli::Cli};
 
 fn main() {
-    match app::run(Cli::parse()) {
-        Ok(message) => print!("{message}"),
+    let cli = Cli::parse();
+    let json = cli.json;
+    match app::run(cli) {
+        Ok(message) => {
+            if json {
+                println!("{}", serde_json::json!({"ok": true, "message": message}));
+            } else {
+                print!("{message}");
+            }
+        }
         Err(error) => {
-            eprintln!("error: {error}");
+            if json {
+                println!("{}", serde_json::json!({"ok": false, "error": error}));
+            } else {
+                eprintln!("error: {error}");
+            }
             std::process::exit(1);
         }
     }
