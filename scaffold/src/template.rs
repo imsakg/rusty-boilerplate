@@ -66,6 +66,12 @@ pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>
         }
         _ => return Err(format!("template {kind:?} has no renderer yet")),
     }
+    let run = match kind {
+        "lib" => "cargo test".to_owned(),
+        "workspace" => format!("cargo run -p {name}-app"),
+        _ => "cargo run -- --help".to_owned(),
+    };
+    files.insert(PathBuf::from("README.md"), format!("# {name}\n\nGenerated with rusty using the `{kind}` template.\n\n## Development\n\n```sh\n{run}\ncargo test --all-targets\ncargo fmt --all --check\ncargo clippy --all-targets -- -D warnings\n```\n\nReview generated code and fill in any license copyright placeholders before publishing.\n"));
     Ok(files)
 }
 
