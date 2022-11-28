@@ -66,6 +66,14 @@ pub fn project_files(name: &str, kind: &str) -> Result<BTreeMap<PathBuf, String>
         }
         _ => return Err(format!("template {kind:?} has no renderer yet")),
     }
+    files.insert(
+        PathBuf::from("rustfmt.toml"),
+        "max_width = 100\nuse_small_heuristics = \"Default\"\n".into(),
+    );
+    files.insert(
+        PathBuf::from("clippy.toml"),
+        "avoid-breaking-exported-api = true\n".into(),
+    );
     let run = match kind {
         "lib" => "cargo test".to_owned(),
         "workspace" => format!("cargo run -p {name}-app"),
