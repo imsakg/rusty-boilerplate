@@ -32,6 +32,9 @@ pub struct ProjectArgs {
     /// Initialize a local Git repository after creating files (never commits or pushes)
     #[arg(long)]
     pub git: bool,
+    /// Include a GitHub Actions formatting/lint/test workflow
+    #[arg(long)]
+    pub ci: bool,
     /// Override the Rust edition
     #[arg(long, value_parser = ["2018", "2021"])]
     pub edition: Option<String>,

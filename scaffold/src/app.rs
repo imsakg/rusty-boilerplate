@@ -69,6 +69,12 @@ pub fn run(cli: Cli) -> Result<String, String> {
                 Plan::project(&name, &settings.template)?
             };
             settings.apply(&mut plan)?;
+            if options.ci {
+                plan.files.insert(
+                    ".github/workflows/ci.yml".into(),
+                    include_str!("../templates/ci.yml").into(),
+                );
+            }
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
                 return Ok(plan
@@ -114,6 +120,12 @@ pub fn run(cli: Cli) -> Result<String, String> {
                 Plan::project(&name, &settings.template)?
             };
             settings.apply(&mut plan)?;
+            if options.ci {
+                plan.files.insert(
+                    ".github/workflows/ci.yml".into(),
+                    include_str!("../templates/ci.yml").into(),
+                );
+            }
             if options.dry_run {
                 plan.preflight(&root).map_err(|e| e.to_string())?;
                 return Ok(plan
