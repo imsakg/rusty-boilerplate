@@ -7,6 +7,29 @@ use std::path::Path;
 pub fn run(cli: Cli) -> Result<String, String> {
     let config = cli.config;
     match cli.command {
+        Some(Command::Doctor) => {
+            let mut report = String::new();
+            let mut missing = false;
+            for tool in ["rustc", "cargo", "git"] {
+                match std::process::Command::new(tool).arg("--version").output() {
+                    Ok(output) if output.status.success() => report.push_str(&format!(
+                        "{}\n",
+                        String::from_utf8_lossy(&output.stdout).trim()
+                    )),
+                    _ => {
+                        report.push_str(&format!("{tool}: unavailable\n"));
+                        if tool != "git" {
+                            missing = true;
+                        }
+                    }
+                }
+            }
+            if missing {
+                Err(format!("required Rust tools are missing:\n{report}"))
+            } else {
+                Ok(report)
+            }
+        }
         Some(Command::Generate {
             kind,
             name,

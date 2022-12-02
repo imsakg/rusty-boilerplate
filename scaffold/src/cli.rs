@@ -48,6 +48,8 @@ pub struct ProjectArgs {
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    /// Check installed Rust and Git tooling without changing the system
+    Doctor,
     /// Generate a source file inside a Cargo project
     Generate {
         #[arg(value_enum)]
