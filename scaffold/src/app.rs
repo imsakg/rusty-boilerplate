@@ -197,7 +197,7 @@ fn load_settings(
                 .map_err(|e| format!("reading config {}: {e}", path.display()))?,
         )?;
     }
-    settings = settings.merge_env(std::env::vars())?;
+    settings = settings.merge_env(crate::config::environment()?)?;
     if let Some(template) = &options.template {
         settings.template = template.clone();
     }

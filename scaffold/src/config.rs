@@ -192,3 +192,21 @@ pub fn discover(
     }
     paths
 }
+
+/// Read only the supported keys: unrelated non-Unicode environment values are harmless.
+pub fn environment() -> Result<Vec<(String, String)>, String> {
+    let mut values = Vec::new();
+    for key in [
+        "RUSTY_TEMPLATE",
+        "RUSTY_EDITION",
+        "RUSTY_AUTHORS",
+        "RUSTY_LICENSE",
+    ] {
+        match std::env::var(key) {
+            Ok(value) => values.push((key.to_owned(), value)),
+            Err(std::env::VarError::NotPresent) => {}
+            Err(_) => return Err(format!("{key} must be valid Unicode")),
+        }
+    }
+    Ok(values)
+}
