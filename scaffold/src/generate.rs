@@ -18,7 +18,7 @@ pub fn file_plan(kind: Kind, name: &str) -> Result<Plan, String> {
     }
     let (path, source) = match kind {
         Kind::Example => (format!("examples/{name}.rs"), format!("fn main() {{\n    println!(\"Example: {name}\");\n}}\n")),
-        Kind::Test => (format!("tests/{name}.rs"), "#[test]\nfn manifest_exists() {\n    assert!(std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\")).join(\"Cargo.toml\").is_file());\n}\n".into()),
+        Kind::Test => (format!("tests/{name}.rs"), "#[test]\nfn manifest_exists() {\n    assert!(std::path::Path::new(env!(\"CARGO_MANIFEST_DIR\"))\n        .join(\"Cargo.toml\")\n        .is_file());\n}\n".into()),
         Kind::Module => (
             format!("src/{name}.rs"),
             format!("//! {name} module.\n\npub fn run() {{}}\n"),
