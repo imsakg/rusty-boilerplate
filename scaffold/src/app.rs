@@ -70,7 +70,8 @@ pub fn run(cli: Cli) -> Result<String, String> {
         Some(Command::Config {
             action: crate::cli::ConfigCommand::Show,
         }) => {
-            let settings = load_settings(config.as_deref(), &crate::cli::ProjectArgs::default())?;
+            let settings =
+                load_settings(config.as_deref(), &crate::cli::ProjectArgs::default(), None)?;
             toml::to_string_pretty(&settings).map_err(|e| e.to_string())
         }
         None => Ok("Rust project scaffolding; use --help for available commands.\n".into()),
@@ -85,7 +86,7 @@ pub fn run(cli: Cli) -> Result<String, String> {
             let name = name
                 .or_else(|| root.file_name().and_then(|n| n.to_str()).map(str::to_owned))
                 .ok_or("cannot infer a project name; use --name")?;
-            let settings = load_settings(config.as_deref(), &options)?;
+            let settings = load_settings(config.as_deref(), &options, Some(&root))?;
             let mut plan = if let Some(directory) = &options.template_dir {
                 crate::local::load(directory, &name, &settings.edition)?
             } else {
@@ -136,7 +137,7 @@ pub fn run(cli: Cli) -> Result<String, String> {
             if root.symlink_metadata().is_ok() {
                 return Err(format!("destination already exists: {}", root.display()));
             }
-            let settings = load_settings(config.as_deref(), &options)?;
+            let settings = load_settings(config.as_deref(), &options, None)?;
             let mut plan = if let Some(directory) = &options.template_dir {
                 crate::local::load(directory, &name, &settings.edition)?
             } else {
@@ -175,6 +176,7 @@ pub fn run(cli: Cli) -> Result<String, String> {
 fn load_settings(
     path: Option<&Path>,
     options: &crate::cli::ProjectArgs,
+    discovery_root: Option<&Path>,
 ) -> Result<crate::config::Settings, String> {
     let paths = if let Some(path) = path {
         vec![path.to_path_buf()]
@@ -186,7 +188,11 @@ fn load_settings(
             })
             .map(|p| p.join("rusty/config.toml"));
         crate::config::discover(
-            &std::env::current_dir().map_err(|e| e.to_string())?,
+            &discovery_root
+                .map(std::path::Path::to_path_buf)
+                .map(Ok)
+                .unwrap_or_else(std::env::current_dir)
+                .map_err(|e| e.to_string())?,
             user.as_deref(),
         )
     };
