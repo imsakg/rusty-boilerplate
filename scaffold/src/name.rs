@@ -6,6 +6,13 @@ pub fn validate_name(name: &str) -> Result<(), String> {
     {
         return Err(format!("invalid project name {name:?}: use an ASCII letter followed by letters, digits, hyphens or underscores"));
     }
+    let future_reserved = [
+        "abstract", "become", "box", "do", "final", "macro", "override", "priv", "try", "typeof",
+        "unsized", "virtual", "yield", "union",
+    ];
+    if future_reserved.contains(&name) {
+        return Err(format!("reserved project name {name:?}"));
+    }
     let reserved = [
         "self", "Self", "super", "crate", "mod", "type", "fn", "use", "pub", "let", "const",
         "static", "enum", "struct", "trait", "impl", "where", "match", "move", "async", "await",

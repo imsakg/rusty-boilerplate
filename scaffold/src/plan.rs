@@ -27,6 +27,9 @@ impl Plan {
     }
 
     pub fn preflight(&self, root: &std::path::Path) -> std::io::Result<()> {
+        // Public plan contents may have been edited after construction.
+        Self::from_files(self.files.keys().cloned().map(|p| (p, String::new())))
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e))?;
         for path in self.files.keys() {
             let target = root.join(path);
             if target.symlink_metadata().is_ok() {
@@ -64,7 +67,20 @@ impl Plan {
         for (path, content) in files {
             if path.components().any(|part| {
                 let part = part.as_os_str().to_string_lossy();
-                part.eq_ignore_ascii_case(".git") || part.contains([':', '<', '>', '|', '?', '*'])
+                let stem = part
+                    .split('.')
+                    .next()
+                    .unwrap_or_default()
+                    .to_ascii_lowercase();
+                let device = ["con", "prn", "aux", "nul"].contains(&stem.as_str())
+                    || ((stem.starts_with("com") || stem.starts_with("lpt"))
+                        && stem.len() == 4
+                        && matches!(stem.as_bytes()[3], b'1'..=b'9'));
+                device
+                    || part.ends_with(['.', ' '])
+                    || part.chars().any(char::is_control)
+                    || part.eq_ignore_ascii_case(".git")
+                    || part.contains([':', '<', '>', '|', '?', '*'])
             }) {
                 return Err(format!(
                     "nonportable or repository-control path {}",
@@ -79,10 +95,23 @@ impl Plan {
             {
                 return Err(format!("unsafe generated path {}", path.display()));
             }
+            let path: PathBuf = path.components().collect();
             if !seen.insert(path.to_string_lossy().to_ascii_lowercase()) {
                 return Err(format!("duplicate generated path {}", path.display()));
             }
             result.insert(path, content);
+        }
+        for path in result.keys() {
+            if path
+                .ancestors()
+                .skip(1)
+                .any(|ancestor| seen.contains(&ancestor.to_string_lossy().to_ascii_lowercase()))
+            {
+                return Err(format!(
+                    "generated file is also a directory: {}",
+                    path.display()
+                ));
+            }
         }
         Ok(Self { files: result })
     }
