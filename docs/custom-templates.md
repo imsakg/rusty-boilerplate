@@ -64,3 +64,10 @@ Writing a multi-file project is not a filesystem transaction: disk-full or other
 mid-write errors may leave already-created files/directories. Inspect and remove
 only the generated paths before retrying. Git initialization happens after file
 creation; a failed `--git` reports that the project files already exist.
+
+Writes use a capability-relative directory handle after the destination root is
+opened. Descendant symlink swaps cannot redirect those writes outside that root.
+The caller-selected root and template source directory must still be trusted;
+this does not defend against another process replacing the root before it is
+opened or racing changes to the template source itself. Root/ancestor choices
+made explicitly by the caller are outside the template's authority boundary.

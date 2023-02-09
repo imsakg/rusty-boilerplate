@@ -12,16 +12,19 @@ impl Plan {
     pub fn write(&self, root: &std::path::Path) -> std::io::Result<Vec<PathBuf>> {
         use std::io::Write;
         self.preflight(root)?;
+        std::fs::create_dir_all(root)?;
+        // Hold a directory capability: descendant symlink swaps cannot escape it.
+        let directory = cap_std::fs::Dir::open_ambient_dir(root, cap_std::ambient_authority())?;
         let mut written = Vec::new();
         for (path, contents) in &self.files {
-            let target = root.join(path);
-            std::fs::create_dir_all(target.parent().expect("relative file has a parent"))?;
-            let mut file = std::fs::OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&target)?;
+            if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+                directory.create_dir_all(parent)?;
+            }
+            let mut options = cap_std::fs::OpenOptions::new();
+            options.write(true).create_new(true);
+            let mut file = directory.open_with(path, &options)?;
             file.write_all(contents.as_bytes())?;
-            written.push(target);
+            written.push(root.join(path));
         }
         Ok(written)
     }
