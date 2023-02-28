@@ -5,6 +5,9 @@ edition = "2021"
 description = "Small, safe Rust project and file scaffolding"
 license = "MIT OR Apache-2.0"
 publish = false
+repository = "https://github.com/imsakg/rusty-boilerplate"
+readme = "../README.md"
+keywords = ["cli", "scaffold", "boilerplate"]
 
 [workspace]
 
@@ -17,7 +20,6 @@ cap-std = "3"
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-thiserror = "1"
 toml = "0.5"
 
 [dev-dependencies]

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-work=$(mktemp -d)
+work=$(mktemp -d "${TMPDIR:-.}/rusty-smoke.XXXXXX")
 trap 'rm -rf "$work"' EXIT HUP INT TERM
 rusty() {
     cargo run --quiet --manifest-path "$root/scaffold/Cargo.toml" -- "$@"
