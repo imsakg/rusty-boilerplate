@@ -35,6 +35,7 @@ tracing-subscriber = { version = "0.3", features = ["time", "local-time"] }
 tracing-appender = { package = "clia-tracing-appender", version = "0.2" }
 tracing-futures = "0.2"
 tracing-log = "0.1"
+reqwest = { version = "0.11.18", features = ["serde_json", "json"] }
 
 [dev-dependencies]
 anyhow = "1"

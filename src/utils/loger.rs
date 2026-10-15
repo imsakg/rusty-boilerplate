@@ -26,6 +26,4 @@ pub fn loger_init(verbose: bool) {
     } else {
         tracer.init();
     }
-
-    error!("error");
 }

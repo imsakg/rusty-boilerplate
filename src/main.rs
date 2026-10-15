@@ -96,12 +96,13 @@ async fn main() -> Result<()> {
     }
 
     loger_init(matches.get_flag("verb"));
-    error!("This is an error");
 
     for entry in read_dir("./")?.filter_map(|e| e.ok()) {
         let entry: String = W(&entry).try_into()?;
         println!("{entry}");
     }
+
+    let json = utils::extractor::extract_some_json().await?;
 
     // if let Some(path) = args.path.as_deref() {
     //     let input = args.path.as_deref().unwrap();
